@@ -2,7 +2,7 @@
 
 # Defect Detection Pipeline for Operational Monitoring
 
-## Problem Overview 
+## Problem Overview
 
 In industrial and operational environments, visual inspection is a critical step for ensuring product quality and system reliability. Components or surfaces may develop defects such as scratches, cracks, deformations, or contaminations that indicate abnormal operating conditions or manufacturing faults.
 
@@ -17,7 +17,7 @@ The objective is to design an end-to-end machine learning pipeline that supports
 
 ---
 
-## Operational Considerations 
+## Operational Considerations
 
 * **False positives** (normal classified as defective) may lead to unnecessary inspections, increased costs, and reduced trust in the system.
 * **False negatives** (defective classified as normal) may allow faulty components to pass undetected, potentially causing safety risks, system failures, or downstream losses.
@@ -26,7 +26,7 @@ For many real-world operational decisions (e.g., accept/reject, trigger alert/co
 
 ---
 
-## Dataset Description 
+## Dataset Description
 
 This project uses a subset of the **MVTec Anomaly Detection (MVTec AD)** dataset.
 
@@ -49,7 +49,7 @@ Details about data preprocessing, splits, and category selection are documented 
 
 ---
 
-## High-Level Pipeline 
+## High-Level Pipeline
 
 The system follows a modular, end-to-end machine learning workflow:
 
@@ -82,7 +82,7 @@ This structure allows clear separation between data handling, model training, ev
 
 ---
 
-## Project Structure 
+## Project Structure
 
 The repository is organized to reflect best practices for machine learning systems intended for production environments:
 
@@ -101,7 +101,7 @@ defect-detection-pipeline/
 
 ---
 
-## Project Goals 
+## Project Goals
 
 * Build a realistic image-based defect detection pipeline
 * Emphasize operational decision-making constraints
@@ -110,7 +110,7 @@ defect-detection-pipeline/
 
 ---
 
-## References & Sources 
+## References & Sources
 
 The design choices and dataset selection in this project are informed by the following sources:
 
@@ -130,4 +130,3 @@ The design choices and dataset selection in this project are informed by the fol
 
    * Google Cloud ML Engineering best practices
    * “Hidden Technical Debt in Machine Learning Systems” — Sculley et al., NIPS 2015
-

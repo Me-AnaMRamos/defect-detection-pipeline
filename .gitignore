@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+.venv/
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Data (never commit raw data)
+data/raw/
+data/processed/
+
+# Environment variables
+.env
+
+# OS
+.DS_Store
+

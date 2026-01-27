@@ -1,0 +1,19 @@
+seed: 42
+
+paths:
+  data_dir: data
+  output_dir: outputs
+
+data:
+  image_size: 256
+  train_split: 0.8
+  val_split: 0.1
+
+model:
+  name: resnet18
+  pretrained: true
+
+training:
+  batch_size: 32
+  epochs: 5
+  lr: 0.0003

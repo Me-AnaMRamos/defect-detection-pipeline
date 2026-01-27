@@ -13,7 +13,7 @@ This project addresses the problem of **automated defect detection from images**
 * **Normal**: Image corresponds to an expected, non-defective operational state.
 * **Defective**: Image contains visual anomalies indicating a deviation from normal conditions.
 
-The objective is to design an end-to-end machine learning pipeline that supports reliable operational monitoring while explicitly considering the trade-offs between false positives and false negatives.
+The objective is to design an end-to-end machine learning pipeline that supports reliable operational monitoring. The system prioritizes detecting defective items, accepting some false alarms to reduce the risk of undetected faults.
 
 ---
 

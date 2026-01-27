@@ -1,0 +1,8 @@
+dataset:
+  root: data/raw/mvtec_ad
+  categories:
+    - tile
+labels:
+  normal_defect_name: good
+  normal_label: 0
+  defective_label: 1

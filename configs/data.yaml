@@ -6,3 +6,7 @@ labels:
   normal_defect_name: good
   normal_label: 0
   defective_label: 1
+
+splits:
+  val_ratio: 0.2
+  seed: 42

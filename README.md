@@ -82,6 +82,18 @@ This structure allows clear separation between data handling, model training, ev
 
 ---
 
+## Modeling Approach
+
+We use a **ResNet18 pretrained on ImageNet** as a frozen feature extractor. The final classification layer is removed, producing a **512-dimensional embedding** for each image.
+
+During training, embeddings from **normal samples only** are averaged to form a **prototype vector representing normality**.
+
+At inference time, **anomaly scores** are computed as the **L2 distance** between an image embedding and the normal prototype.
+
+A decision **threshold is calibrated using validation data containing only normal samples**, reflecting realistic operational constraints where defective examples may be scarce or unavailable during calibration.
+
+---
+
 ## Project Structure
 
 The repository is organized to reflect best practices for machine learning systems intended for production environments:

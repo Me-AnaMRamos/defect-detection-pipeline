@@ -4,7 +4,12 @@ import argparse
 import json
 import random
 
+import torch
+
 from src.config import load_yaml, parse_config
+from src.data.dataset import build_datasets
+from src.training.fit_gaussian import fit_gaussian
+from src.training.threshold import select_threshold
 
 
 def set_seed(seed: int) -> None:
@@ -36,8 +41,29 @@ def main() -> int:
         print(f"Output dir: {cfg.paths.output_dir.resolve()}")
         return 0
 
-    # Training will be implemented in the next step
-    raise NotImplementedError("Training loop not implemented yet. Run with --dry-run for now.")
+    train_dataset, val_dataset = build_datasets(cfg)
+
+    # 1. Fit normal model
+    normal_model = fit_gaussian(train_dataset, cfg)
+
+    # 2. Threshold selection
+    threshold_result = select_threshold(val_dataset, normal_model, cfg)
+
+    # 3. Save everything
+    torch.save(
+        {
+            **normal_model,
+            "threshold": threshold_result["threshold"],
+            "target_fpr": threshold_result["fpr"],
+            "recall": threshold_result["recall"],
+        },
+        cfg.paths.output_dir / "gaussian_ad.pt",
+    )
+
+    print("✅ Training complete")
+    print(threshold_result)
+
+    return 0
 
 
 if __name__ == "__main__":

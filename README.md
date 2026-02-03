@@ -22,8 +22,12 @@ The objective is to design an end-to-end machine learning pipeline that supports
 * **False positives** (normal classified as defective) may lead to unnecessary inspections, increased costs, and reduced trust in the system.
 * **False negatives** (defective classified as normal) may allow faulty components to pass undetected, potentially causing safety risks, system failures, or downstream losses.
 
-For many real-world operational decisions (e.g., accept/reject, trigger alert/continue operation), a binary decision is sufficient and often preferred. Therefore, the system is designed with deployment and decision-making constraints in mind, rather than purely academic performance metrics.
+To reflect these constraints, the system is evaluated using Recall at a fixed False Positive Rate (FPR ≤ 5%).
+This metric directly captures the operational requirement of maximizing defect detection (high recall) while explicitly constraining unnecessary inspections to an acceptable level.
 
+Rather than optimizing global metrics that treat all errors symmetrically, this evaluation strategy aligns the model’s performance with real-world decision thresholds used in industrial inspection pipelines.
+
+For many real-world decisions (e.g., accept/reject, trigger alert/continue operation), a binary outcome is sufficient and often preferred. The system is therefore designed with deployment and operational decision-making in mind.
 ---
 
 ## Dataset Description

@@ -1,12 +1,14 @@
 import torch.nn as nn
-import torchvision.models as models
+from torchvision.models import ResNet18_Weights, resnet18
 
 
 class BaselineCNN(nn.Module):
     def __init__(self, pretrained=True, freeze_backbone=True):
         super().__init__()
 
-        backbone = models.resnet18(pretrained=pretrained)
+        # backbone = models.resnet18(pretrained=pretrained)
+        weights = ResNet18_Weights.IMAGENET1K_V1
+        backbone = resnet18(weights=weights)
 
         # Remove classifier head → feature extractor
         self.feature_dim = backbone.fc.in_features

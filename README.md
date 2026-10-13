@@ -28,6 +28,7 @@ This metric directly captures the operational requirement of maximizing defect d
 Rather than optimizing global metrics that treat all errors symmetrically, this evaluation strategy aligns the model’s performance with real-world decision thresholds used in industrial inspection pipelines.
 
 For many real-world decisions (e.g., accept/reject, trigger alert/continue operation), a binary outcome is sufficient and often preferred. The system is therefore designed with deployment and operational decision-making in mind.
+
 ---
 
 ## Dataset Description

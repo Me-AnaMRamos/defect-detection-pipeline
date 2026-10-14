@@ -1,5 +1,3 @@
-
-
 # Defect Detection Pipeline for Operational Monitoring
 
 ## Problem Overview
@@ -65,53 +63,88 @@ The system follows a modular, end-to-end machine learning workflow:
     Data Ingestion & Validation
              │
              ▼
-     Preprocessing & Augmentation
+        Preprocessing
              │
              ▼
-      Feature Learning (CNN)
+  Feature Extraction (frozen CNN)
              │
              ▼
-      Binary Classification
-   (Normal vs Defective)
+   Anomaly Scoring + Calibrated
+   Threshold (Normal vs Defective)
              │
              ▼
         Model Evaluation
-   (Precision, Recall, Trade-offs)
-             │
-             ▼
-        Inference Service
-        (API / Container)
+   (Recall @ FPR ≤ 5%, AUROC)
 ```
 
-This structure allows clear separation between data handling, model training, evaluation, and deployment, enabling maintainability and future extensions.
+This structure keeps data handling, scoring, calibration and evaluation separate, so each stage can be tested and swapped independently.
 
 ---
 
 ## Modeling Approach
 
-We use a **ResNet18 pretrained on ImageNet** as a frozen feature extractor. The final classification layer is removed, producing a **512-dimensional embedding** for each image.
+A **ResNet18 pretrained on ImageNet** is used as a **frozen feature extractor**: the classification head is removed and each image is mapped to a **512-dimensional embedding**. No network weights are trained.
 
-During training, embeddings from **normal samples only** are averaged to form a **prototype vector representing normality**.
+A normality model is fitted on embeddings of **normal training images only**, one model per category. Three scoring methods are compared on the same embeddings (higher score = more anomalous):
 
-At inference time, **anomaly scores** are computed as the **L2 distance** between an image embedding and the normal prototype.
+| Method | Fit on normal embeddings | Anomaly score |
+|---|---|---|
+| `l2_prototype` | Mean embedding (prototype) | L2 distance to the prototype |
+| `mahalanobis` | Mean and covariance (+ ε·I ridge) | Squared Mahalanobis distance |
+| `knn` | Store all embeddings | Mean L2 distance to the k nearest |
 
-A decision **threshold is calibrated using validation data containing only normal samples**, reflecting realistic operational constraints where defective examples may be scarce or unavailable during calibration.
+---
+
+## Evaluation Protocol
+
+The data is split so that calibration never needs defective images, matching deployments where defects are rare or unavailable when the system is set up:
+
+| Split | Contents | Used for |
+|---|---|---|
+| train | normal only (80% of MVTec `train/good`) | Fit the normality model |
+| val | normal only (20% of MVTec `train/good`) | Calibrate the decision threshold |
+| test | MVTec `test/` (normal + defective) | Report performance |
+
+1. **Calibration.** The threshold is the 95th percentile of validation scores, so at most 5% of normal images are flagged. False positive rate depends only on normal images, so no defects are needed for this step.
+2. **Evaluation.** On the test split, at that fixed threshold: **recall** (defects caught), **realized FPR** and precision. Threshold-free **AUROC** and **AUPR** are also reported.
+3. **Oracle reference.** The best recall achievable on test with FPR ≤ 5% if the threshold were chosen with test labels. This is not deployable; the gap to the calibrated recall measures the cost of calibrating on normal data only.
+
+---
+
+## Quickstart
+
+```bash
+pip install -r requirements.txt          # or requirements-dev.txt for tests and linting
+
+# 1. Download MVTec AD and extract it to data/raw/mvtec_ad/ (see data/README.md)
+# 2. Build the dataset index
+python data/index_dataset.py
+
+# 3. Fit, calibrate and evaluate every category × scoring method in configs/train.yaml
+python -m src.training.run --config configs/train.yaml
+
+# Tests (no dataset needed)
+pytest
+```
+
+Outputs go to `outputs/`: `results.csv` (one row per category × method), per-image test scores, and the fitted model and threshold for each pair.
 
 ---
 
 ## Project Structure
 
-The repository is organized to reflect best practices for machine learning systems intended for production environments:
-
 ```
 defect-detection-pipeline/
-├── data/          # Dataset handling and documentation
-├── notebooks/     # Exploration and experiments
-├── src/           # Core pipeline logic
-├── api/           # Inference service
-├── docker/        # Containerization for deployment
-├── configs/       # Configuration files
-├── tests/         # Unit and integration tests
+├── configs/            # train.yaml (pipeline), data.yaml (dataset indexing)
+├── data/               # index_dataset.py and dataset documentation
+├── scripts/            # data sanity checks
+├── src/
+│   ├── data/           # dataset and transforms
+│   ├── models/         # frozen ResNet18 feature extractor
+│   ├── scoring/        # l2_prototype, mahalanobis, knn scorers
+│   ├── evaluation/     # calibration, metrics, plots
+│   └── training/       # run.py: fit → calibrate → evaluate
+├── tests/              # unit tests and an end-to-end smoke test
 ├── requirements.txt
 └── README.md
 ```
@@ -122,7 +155,7 @@ defect-detection-pipeline/
 
 * Build a realistic image-based defect detection pipeline
 * Emphasize operational decision-making constraints
-* Demonstrate clean structure, reproducibility, and deployment readiness
+* Demonstrate clean structure and reproducibility
 * Serve as a reference implementation for industrial visual inspection systems
 
 ---

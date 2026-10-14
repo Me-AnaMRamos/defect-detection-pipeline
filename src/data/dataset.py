@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pathlib import Path
 
 import pandas as pd
@@ -5,27 +7,30 @@ from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
 
+IMAGENET_MEAN = [0.485, 0.456, 0.406]
+IMAGENET_STD = [0.229, 0.224, 0.225]
+
+SPLITS = ("train", "val", "test")
+
 
 class MVTecBinaryDataset(Dataset):
+    """Rows of the dataset index for one split (and optionally some categories)."""
+
     def __init__(
         self,
-        index_csv: str,
+        index_csv: str | Path,
         split: str,
         transform=None,
-        categories: list[str] | None = None,
+        categories: list[str] | tuple[str, ...] | None = None,
     ):
-        self.df = pd.read_csv(index_csv)
-
-        # Filter split
-        self.df = self.df[self.df["split"] == split]
-
-        # Optional category filtering
+        df = pd.read_csv(index_csv)
+        df = df[df["split"] == split]
         if categories is not None:
-            self.df = self.df[self.df["category"].isin(categories)]
+            df = df[df["category"].isin(list(categories))]
+        if df.empty:
+            raise ValueError(f"No samples for split='{split}', categories={categories}")
 
-        if self.df.empty:
-            raise ValueError(f"No samples found for split='{split}'")
-
+        self.df = df.reset_index(drop=True)
         self.transform = transform
 
     def __len__(self) -> int:
@@ -33,52 +38,37 @@ class MVTecBinaryDataset(Dataset):
 
     def __getitem__(self, idx: int):
         row = self.df.iloc[idx]
-
-        image_path = Path(row["image_path"])
-        label = int(row["label"])
-
-        image = Image.open(image_path).convert("RGB")
-
+        image = Image.open(Path(row["image_path"])).convert("RGB")
         if self.transform:
             image = self.transform(image)
+        return image, int(row["label"])
 
-        return image, label
 
-
-def build_datasets(cfg):
-    """
-    Build train and validation datasets according to config.
-
-    Assumptions:
-    - Train split contains ONLY normal samples (label = 0)
-    - Validation split may contain both normal and defects
-    """
-
-    transform = transforms.Compose(
+def eval_transform(image_size: int) -> transforms.Compose:
+    return transforms.Compose(
         [
-            transforms.Resize((cfg.data.image_size, cfg.data.image_size)),
+            transforms.Resize((image_size, image_size)),
             transforms.ToTensor(),
-            transforms.Normalize(
-                mean=[0.485, 0.456, 0.406],
-                std=[0.229, 0.224, 0.225],
-            ),
+            transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
         ]
     )
 
-    index_csv = cfg.paths.dataset_index
 
-    train_dataset = MVTecBinaryDataset(
-        index_csv=index_csv,
-        split="train",
-        transform=transform,
-        categories=cfg.data.categories,
-    )
+def build_datasets(cfg, category: str) -> dict[str, MVTecBinaryDataset]:
+    """Train / val / test datasets for one category.
 
-    val_dataset = MVTecBinaryDataset(
-        index_csv=index_csv,
-        split="val",
-        transform=transform,
-        categories=cfg.data.categories,
-    )
-
-    return train_dataset, val_dataset
+    - train: normal only (fit the normality model)
+    - val:   normal only (calibrate the threshold)
+    - test:  normal + defective (report performance)
+    """
+    tf = eval_transform(cfg.data.image_size)
+    datasets = {
+        split: MVTecBinaryDataset(cfg.paths.dataset_index, split, tf, categories=[category])
+        for split in SPLITS
+    }
+    for split in ("train", "val"):
+        if (datasets[split].df["label"] != 0).any():
+            raise ValueError(f"'{split}' split for '{category}' must contain only normal images")
+    if datasets["test"].df["label"].nunique() < 2:
+        raise ValueError(f"'test' split for '{category}' needs normal and defective images")
+    return datasets

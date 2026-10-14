@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import torchvision.utils as vutils
 from torch.utils.data import DataLoader
@@ -44,6 +46,8 @@ plt.figure(figsize=(8, 4))
 plt.imshow(grid.permute(1, 2, 0))
 plt.axis("off")
 
-output_path = "outputs/sanity/train_batch_grid.png"
+output_path = Path("outputs/sanity/train_batch_grid.png")
+output_path.parent.mkdir(parents=True, exist_ok=True)
 plt.savefig(output_path, bbox_inches="tight")
 plt.close()
+print(f"Saved {output_path}")

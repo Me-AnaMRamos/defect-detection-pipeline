@@ -1,3 +1,4 @@
+import argparse
 import os
 from pathlib import Path
 
@@ -42,8 +43,9 @@ def index_mvtec_dataset(cfg: dict) -> pd.DataFrame:
         if not train_good_path.exists():
             continue
 
+        # sorted() makes the seeded shuffle reproducible across machines
         train_images = [
-            train_good_path / f for f in os.listdir(train_good_path) if is_image_file(f)
+            train_good_path / f for f in sorted(os.listdir(train_good_path)) if is_image_file(f)
         ]
 
         rng.shuffle(train_images)
@@ -83,14 +85,14 @@ def index_mvtec_dataset(cfg: dict) -> pd.DataFrame:
         if not test_path.exists():
             continue
 
-        for defect_type in os.listdir(test_path):
+        for defect_type in sorted(os.listdir(test_path)):
             defect_path = test_path / defect_type
             if not defect_path.is_dir():
                 continue
 
             label = normal_label if defect_type == normal_defect else defective_label
 
-            for img_name in os.listdir(defect_path):
+            for img_name in sorted(os.listdir(defect_path)):
                 if not is_image_file(img_name):
                     continue
 
@@ -114,11 +116,15 @@ def index_mvtec_dataset(cfg: dict) -> pd.DataFrame:
 
 
 def main():
-    config_path = "configs/data.yaml"
-    output_path = Path("data/processed/dataset_index.csv")
+    parser = argparse.ArgumentParser(description="Build the MVTec AD dataset index CSV")
+    parser.add_argument("--config", default="configs/data.yaml")
+    parser.add_argument("--output", default="data/processed/dataset_index.csv")
+    args = parser.parse_args()
+
+    output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    cfg = load_config(config_path)
+    cfg = load_config(args.config)
     df = index_mvtec_dataset(cfg)
 
     df.to_csv(output_path, index=False)
@@ -128,7 +134,7 @@ def main():
     print("\nSample:")
     print(df.head())
     print("\nClass distribution:")
-    print(df["label"].value_counts())
+    print(df.groupby(["category", "split", "label"]).size().unstack(fill_value=0))
 
 
 if __name__ == "__main__":

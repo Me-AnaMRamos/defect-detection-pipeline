@@ -41,7 +41,7 @@ MVTec AD is a widely used industrial inspection dataset containing high-resoluti
 
 Although originally designed for anomaly detection, the dataset is adapted here to a **binary classification setting** by grouping all anomalous samples under a single *defective* label. This mirrors real operational scenarios where the primary goal is to detect whether intervention is required, rather than to classify the specific defect type.
 
-**Key reasons for choosing MVTec AD:**
+**Reasons for choosing MVTec AD:**
 
 * Realistic industrial imagery
 * High relevance to operational monitoring tasks
